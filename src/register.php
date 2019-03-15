@@ -25,7 +25,7 @@
         <input type="password" name="password_2">
         </div>
         <div>
-        <button type="submit" name="reg_user">Register</button>
+        <button type="submit" name="regUser">Register</button>
         </div>
         <p>
             Already a member? <a href="login.php">Sign in</a>
