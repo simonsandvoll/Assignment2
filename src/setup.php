@@ -64,7 +64,7 @@ function createTables($mysqli) {
 
 // regex password check
 /*
-    if (!/^.{5,}$/.test(password)) // check if password is longer than 5 characters
+    if (!preg_match("/^.{5,}$/", password)) // check if password is longer than 5 characters
     if (!/[a-z]/.test(password)) // check if there is at least one lowercase character
     if (!/[A-Z]/.test(password)) // check if there is at least one uppercase character
 */
