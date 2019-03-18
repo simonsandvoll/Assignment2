@@ -1,9 +1,14 @@
 <?php
 
+if (isset($_GET['user'])) {
+    $username = $_GET['user'];
+} else {
+    $username = '';
+}
+
 $errors = array();
 // database connection
 $db = mysqli_connect('localhost', 'root', '', 'urbandictionary');
-
 if (isset($_GET['id'])) {
     unset($topicId);
     $topicId = $_GET['id'];
@@ -25,7 +30,6 @@ if (isset($_GET['id'])) {
     if ($numRows == 0) {
         echo '<p>No entries found!</p>';
     } else {
-
         echo "
             <h1>$topicTitle</h1>
             <div class='entries'>
@@ -47,11 +51,15 @@ if (isset($_GET['id'])) {
             $title = $row['title']; 
             $content = $row['content']; 
             if (count($errors) == 0) {
+            $eId = $row['id'];
             echo "
                 <h3>$title</h3>
                 <p>$content<p>
                 <span>entry written by: $createdBy</span>
                 <p>under the $topicTitle topic</p>";
+                if ($username == $createdBy) {
+                    echo "<a href='server.php?deleteId=$eId'>Delete</a>";
+                }
             }
         }
         echo "
@@ -61,5 +69,9 @@ if (isset($_GET['id'])) {
             <a href='../index.php'>Back</a>
             ";
     }
+}
+
+function deleteEntry($id, $db) {
+    echo $id;
 }
 ?>

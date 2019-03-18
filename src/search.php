@@ -1,3 +1,8 @@
+<form action="search.php" method="get">
+    <label for="search">What are you looking for?</label>
+    <input type="search" name="search">
+    <input type="submit" value="search">
+</form>
 <?php
 
 $errors = array();
@@ -15,7 +20,7 @@ if (isset($_GET['search'])) {
     if (strlen($search) >= $minStringLength) {
         $search = htmlspecialchars($search);
         $search = mysqli_real_escape_string($db, $search);
-        $tQuery = "SELECT * FROM topics WHERE MATCH (title, description) AGAINST ('$search' IN BOOLEAN MODE)";
+        $tQuery = "SELECT * FROM topics WHERE MATCH (title, description) AGAINST ('*$search*' IN BOOLEAN MODE)";
         $tResult = mysqli_query($db, $tQuery);
         if (!$tResult) { $tNumRows = 0; } else {
             $tNumRows = mysqli_num_rows($tResult);
@@ -28,7 +33,7 @@ if (isset($_GET['search'])) {
                 unset($topicTitle, $topicDesc, $topicCreatedBy);
                 
                 $topicUserId = $tRow["createdBy"];
-                $topicUserQuery = "SELECT username FROM users WHERE id='$topicUserId'";
+                $topicUserQuery = "SELECT username FROM users WHERE id='$topicUserId' LIMIT 1";
                 $topicUserResult = mysqli_query($db, $topicUserQuery);
                 $topicUsers = mysqli_fetch_assoc($topicUserResult);
 
@@ -39,17 +44,19 @@ if (isset($_GET['search'])) {
                 }
                 $topicTitle = $tRow['title']; 
                 $topicDesc = $tRow['description']; 
+                $topicId = $tRow['id'];
                 if (count($topicErrors) == 0) {
                 echo "
                     <h2>$topicTitle</h2>
                     <p>$topicDesc<p>
-                    <span>topic created by: $topicCreatedBy</span>
+                    <span>topic created by: $topicCreatedBy</span><br>
+                    <a href='./showEntries.php?id=$topicId'>show all entries under the $topicTitle topic</a>
                     ";
                 }
             }
             echo '</div>';
         }
-        $eQuery = "SELECT * FROM entries WHERE MATCH (title, content) AGAINST ('$search' IN BOOLEAN MODE)";
+        $eQuery = "SELECT * FROM entries WHERE MATCH (title, content) AGAINST ('*$search*' IN BOOLEAN MODE)";
         $eResult = mysqli_query($db, $eQuery);
 
         if (!$eResult) { $eNumRows = 0; } else {
@@ -95,13 +102,18 @@ if (isset($_GET['search'])) {
                     ";
                 }
             }
+            echo '<br><a href="../index.php">back</a>';
             echo '</div>';
         }
     }
+    else {
+        array_push($errors, 'searchword must be longer that 3 characters');
+    }
 }
-if ($topicErrors <= 0 || $entryErrors <= 0) {
-    $errors = array_slice($entryErrors, 0, sizeof($entryErrors)-1);
-    $errors = array_slice($topicErrors, 0, sizeof($topicErrors)-1);
+
+if (sizeof($topicErrors) > 0 || sizeof($entryErrors) > 0 && sizeof($errors) == 0) {
+    $errors = array_merge($entryErrors, $topicErrors);
 }
+
 include('./errors.php');
 ?>

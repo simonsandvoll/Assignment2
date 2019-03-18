@@ -6,7 +6,7 @@ if (isset($_GET['logout'])) {
     unset($_SESSION['username']);
     header('location: index.php');
 }
-?>
+?> 
 
 <!DOCTYPE html>
 <html>
@@ -20,7 +20,6 @@ if (isset($_GET['logout'])) {
 
 <h2>Home Page</h2>
 <div>
-
     <?php if (!isset($_SESSION['username'])) : ?>
         <div>
             <h3>
@@ -44,6 +43,9 @@ if (isset($_GET['logout'])) {
   	<?php endif ?>
     <?php  if (isset($_SESSION['username'])) : ?>
     	<p>Welcome <strong><?php echo $_SESSION['username']; ?></strong></p>
+        <?php  if (isset($_COOKIE['sorting'.$_SESSION['username']])) : ?>
+            <p>You are sorting with <?php echo $_COOKIE['sorting'.$_SESSION['username']]; ?></p>
+        <?php endif ?>
     	<p> <a href="index.php?logout='1'" style="color: red;">logout</a> </p>
         <a href="./src/create.php?topic=1">Create Topic</a>
         <a href="./src/create.php?topic=0">Write entry</a>
@@ -53,9 +55,30 @@ if (isset($_GET['logout'])) {
         <input type="search" name="search">
         <input type="submit" value="search">
     </form>
-    <!-- <a href="./src/showEntries.php">Show entries</a> -->
+    <form action="./src/server.php" method="get">
+        <label for="sortingMethod">Sort Topics</label>
+        <select name="sortingMethod" id="sort">
+            <?php  if (isset($_SESSION['username'])) : ?>
+                <?php  if (isset($_COOKIE['sorting'.$_SESSION['username']])) : ?>
+                    <?php if ($_COOKIE['sorting'.$_SESSION['username']] == 0) : ?>
+                        <option value="0" selected>Chronological</option>
+                        <option value="1">Popluarity</option>
+                    <?php elseif ($_COOKIE['sorting'.$_SESSION['username']] == 1) : ?>
+                        <option value="0">Chronological</option>
+                        <option value="1" selected>Popluarity</option>
+                    <?php endif ?>
+                <?php elseif (!isset($_COOKIE['sorting'.$_SESSION['username']])) : ?>
+                    <option value="0">Chronological</option>
+                    <option value="1">Popluarity</option>
+                <?php elseif (!isset($_SESSION['username'])) : ?>
+                    <option value="0">Chronological</option>
+                    <option value="1">Popluarity</option>
+                <?php endif ?>
+            <?php endif ?>
+        </select>
+        <input type="submit" value="sort">
+    </form>
     <?php include('./src/showTopics.php'); ?>
-    <!-- <a href="./src/showTopics.php">Show topics</a> -->
     <?php include('./src/errors.php'); ?>
 </div>
 </body>

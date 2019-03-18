@@ -2,27 +2,31 @@
 
 session_start();
 
+require 'db.php';
+
 $username = "";
 $errors = array();
 
-// database connection
-$db = mysqli_connect('localhost', 'root', '', 'urbandictionary');
 
-// REGISTER USER__________________________________________________________
+
+// database connection
+$db = db::getInstance();
+
+// REGISTER USER___________________________________________________________________________________
 if (isset($_POST['regUser'])) {
-    $username = mysqli_real_escape_string($db, $_POST['username']);
-    $password_1 = mysqli_real_escape_string($db, $_POST['password_1']);
-    $password_2 = mysqli_real_escape_string($db, $_POST['password_2']);
+   
+    $username = $db->escape_string($_POST['username']);
+    $password_1 = $db->escape_string($_POST['password_1']);
+    $password_2 = $db->escape_string($_POST['password_2']);
     
     // validate form
     if (empty($username)) { array_push($errors, "username is requried"); }
     if (empty($password_1)) { array_push($errors, "password is required"); }
-    if ($password_1 != $password_2) { array_push($errors, "The two passowrds do not match"); }
+    if ($password_1 != $password_2) { array_push($errors, "The two passwords do not match"); }
 
     // check if user exists in database
     $checkQuery = "SELECT * FROM users WHERE username='$username' LIMIT 1";
-    $result = mysqli_query($db, $checkQuery);
-    $user = mysqli_fetch_assoc($result);
+    $user = $db->get_result($checkQuery);
 
     if ($user) {
         if ($user['username'] === $username) {
@@ -32,20 +36,19 @@ if (isset($_POST['regUser'])) {
     if (count($errors) == 0) {
         $password = md5($password_1); // encrypt password 
 
-        $query = "INSERT INTO users (username, password)
-                  VALUES('$username', '$password')";
-        mysqli_query($db, $query);
+        $insertUserQuery = "INSERT INTO users (username, password) VALUES('$username', '$password')";
+        $db->dbquery($insertUserQuery);
         $_SESSION['username'] = $username;
         $_SESSION['success'] = "You are now logged in";
         header('location: ../index.php');
     }
 }
-// !_______________________________
+// !____________________________________________________________________________________________
 
-// LOGIN USER__________________________________________________________
+// LOGIN USER___________________________________________________________________________________
 if (isset($_POST['loginUser'])) {
-    $username = mysqli_real_escape_string($db, $_POST['username']);
-    $password = mysqli_real_escape_string($db, $_POST['password']);
+    $username = $db->escape_string($_POST['username']);
+    $password = $db->escape_string($_POST['password']);
 
     if (empty($username)) {
         array_push($errors, "Username is required");
@@ -57,7 +60,7 @@ if (isset($_POST['loginUser'])) {
     if (count($errors) == 0) {
         $password = md5($password);
         $query = "SELECT * FROM users WHERE username='$username' and password='$password'";
-        $result = mysqli_query($db, $query);
+        $result = $db->get_result($query);
         if (mysqli_num_rows($result) == 1) {
             $_SESSION['username'] = $username;
             $_SESSION['success'] = "You are now logged in";
@@ -67,9 +70,9 @@ if (isset($_POST['loginUser'])) {
         }
     }
 }
-// !_______________________________
+// !_____________________________________________________________________________________________
 
-// CREATE TOPIC__________________________________________________________
+// CREATE TOPIC__________________________________________________________________________________
 if (isset($_POST['createTopic'])) {
     if (isset($_SESSION['username'])) {
         $username = $_SESSION['username'];
@@ -83,7 +86,7 @@ if (isset($_POST['createTopic'])) {
             array_push($errors, "Wrong username combination");
         }
 
-        $title = mysqli_real_escape_string($db, $_POST['title']);
+        $title = $db->escape_string($_POST['title']);
         $description = mysqli_real_escape_string($db, $_POST['description']);
 
         // validate form
@@ -100,9 +103,9 @@ if (isset($_POST['createTopic'])) {
         array_push($errors, 'must be logged in to create topics');
     }
 }
-// !_______________________________
+// !_____________________________________________________________________________________________
 
-// CREATE ENTRY__________________________________________________________
+// CREATE ENTRY__________________________________________________________________________________
 
 if (isset($_POST['writeEntry'])) {
     if (isset($_SESSION['username'])) {
@@ -148,6 +151,80 @@ if (isset($_POST['writeEntry'])) {
         array_push($errors, 'must be logged in to write entries');
     }
 }
-// !_______________________________
+// !_____________________________________________________________________________________________
+
+// DELETE ENTRY__________________________________________________________________________________
+if (isset($_GET['deleteId'])) {
+    if (isset($_SESSION['username'])) {
+        unset($deleteId, $username, $userId);
+        $deleteId = $_GET['deleteId'];
+        $username = $_SESSION['username'];
+        $userId = '';
+        // get user from database
+        $uQuery = "SELECT id FROM users WHERE username='$username' LIMIT 1";
+        $eResult = mysqli_query($db, $uQuery);
+        $user = mysqli_fetch_assoc($eResult);
+        if (mysqli_num_rows($eResult) == 1) {
+            $userId = $user['id'];
+        } else {
+            array_push($errors, "Wrong username");
+        }
+
+        if (count($errors) == 0) {
+            // delete entry
+            $entryQuery = "DELETE FROM entries WHERE createdBy='$userId' AND id='$deleteId'";
+            $entryResult = mysqli_query($db, $entryQuery);
+            if ($entryResult) {
+                echo 'deleted entry ' . $deleteId . ' by ' . $username;
+                $_SESSION['success'] = "Entry deleted";
+                header('location: ../index.php');
+            } else {
+                array_push($errors, "Error deleting entry");
+            }
+        }   
+    }
+}
+// !_____________________________________________________________________________________________
+
+// DELETE TOPIC__________________________________________________________________________________
+if (isset($_GET['deleteTopicId'])) {
+    if (isset($_SESSION['username'])) {
+        unset($deleteId, $username, $userId);
+        $deleteId = $_GET['deleteTopicId'];
+        $username = $_SESSION['username'];
+        $userId = '';
+
+        // check if user is in database
+        $uQuery = "SELECT id FROM users WHERE username='$username' LIMIT 1";
+        $eResult = mysqli_query($db, $uQuery);
+        $user = mysqli_fetch_assoc($eResult);
+        if (mysqli_num_rows($eResult) == 1) {
+            $userId = $user['id'];
+        } else {
+            array_push($errors, "Wrong username");
+        }
+
+        if (count($errors) == 0) {
+            // delete topic
+            $entryQuery = "DELETE FROM topics WHERE createdBy='$userId' AND id='$deleteId'";
+            $entryResult = mysqli_query($db, $entryQuery);
+            if ($entryResult) {
+                echo 'deleted topic ' . $deleteId . ' by ' . $username;
+                $_SESSION['success'] = "Topic deleted";
+                header('location: ../index.php');
+            } else {
+                array_push($errors, "Error deleting topic");
+            }
+        }
+    }
+}
+// !_____________________________________________________________________________________________
+// SORT TOPICS
+if (isset($_GET['sortingMethod']) && $_SESSION['username']) {
+    $sortingMethod = $_GET['sortingMethod'];
+    $username = $_SESSION['username'];
+    setcookie('sorting'. $username . '', $sortingMethod, time() + (86400 * 30), "/");
+    header('location: ../index.php');
+}
 ?>
 
