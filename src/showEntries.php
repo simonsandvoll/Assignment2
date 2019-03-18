@@ -1,5 +1,7 @@
 <?php
 
+require 'db.php';
+
 if (isset($_GET['user'])) {
     $username = $_GET['user'];
 } else {
@@ -8,70 +10,67 @@ if (isset($_GET['user'])) {
 
 $errors = array();
 // database connection
-$db = mysqli_connect('localhost', 'root', '', 'urbandictionary');
+
+$db = db::getInstance();
+
 if (isset($_GET['id'])) {
     unset($topicId);
     $topicId = $_GET['id'];
-    $topicQuery = "SELECT title FROM topics WHERE id = '$topicId' LIMIT 1";
-    $topicResult = mysqli_query($db, $topicQuery);
-    $numTRows = mysqli_num_rows($topicResult);
-    if ($numTRows == 0) {
-        echo '<p>No topics found!</p>';
+    $topicQuery = "SELECT id, title FROM topics WHERE id = '$topicId' LIMIT 1";
+    $topicResult = $db->get_result($topicQuery);
+    if ($topicId == $topicResult['id']) {
+        $topicTitle = $topicResult['title'];
     } else {
-        while($tRow = $topicResult->fetch_assoc()) {
-            unset ($topicTitle);
-            $topicTitle = $tRow['title'];
-        }
-    }
-    $entryQuery = "SELECT * FROM entries WHERE topicId = '$topicId'";
-    $entryResult = mysqli_query($db, $entryQuery);
+        array_push($errors, 'no topics found');
+    } 
+    
+    if (count($errors) == 0) {
+        $entryQuery = "SELECT * FROM entries WHERE topicId = '$topicId'";
+        $entryResult = $db->query($entryQuery);
 
-    $numRows = mysqli_num_rows($entryResult);
-    if ($numRows == 0) {
-        echo '<p>No entries found!</p>';
-    } else {
-        echo "
-            <h1>$topicTitle</h1>
-            <div class='entries'>
-            ";
-        while ($row = $entryResult->fetch_assoc()) {
-            unset($title, $content, $createdBy, $topic);
-            
-            $userId = $row["createdBy"];
-            $userQuery = "SELECT username FROM users WHERE id='$userId' LIMIT 1";
-            $userResult = mysqli_query($db, $userQuery);
-            $users = mysqli_fetch_assoc($userResult);
-
-            if (mysqli_num_rows($userResult) == 1) {
-                $createdBy = $users['username'];
-            } else {
-                array_push($errors, 'did not find user');
-            }
-
-            $title = $row['title']; 
-            $content = $row['content']; 
-            if (count($errors) == 0) {
-            $eId = $row['id'];
+        $numRows = $db->get_rows($entryResult);
+        if ($numRows == 0) {
+            array_push($errors, 'no entries found');
+        } else {
             echo "
-                <h3>$title</h3>
-                <p>$content<p>
-                <span>entry written by: $createdBy</span>
-                <p>under the $topicTitle topic</p>";
-                if ($username == $createdBy) {
-                    echo "<a href='server.php?deleteId=$eId'>Delete</a>";
+                <h1>$topicTitle</h1>
+                <div class='entries'>";
+            while ($row = $entryResult->fetch_assoc()) {
+                unset($title, $content, $createdBy, $topic);
+                
+                $userId = $row["createdBy"];
+                $userQuery = "SELECT id, username FROM users WHERE id='$userId' LIMIT 1";
+                $userResult = $db->get_result($userQuery);
+
+                if ($userId == $userResult['id']) {
+                    $createdBy = $userResult['username'];
+                } else {
+                    array_push($errors, 'did not find user');
+                }
+
+                $title = $row['title']; 
+                $content = $row['content']; 
+                if (count($errors) == 0) {
+                $eId = $row['id'];
+                echo "
+                    <h3>$title</h3>
+                    <p>$content<p>
+                    <span>entry written by: $createdBy</span>
+                    <p>under the $topicTitle topic</p>";
+                    if ($username == $createdBy) {
+                        echo "<a href='server.php?deleteId=$eId'>Delete</a>";
+                    }
                 }
             }
+            echo "
+                </div>
+                <a href='./create.php?topic=1'>Create Topic</a>
+                <a href='./create.php?topic=0'>Write entry</a>
+                <a href='../index.php'>Back</a>
+                ";
         }
-        echo "
-            </table>
-            <a href='./create.php?topic=1'>Create Topic</a>
-            <a href='./create.php?topic=0'>Write entry</a>
-            <a href='../index.php'>Back</a>
-            ";
     }
 }
+$db->close();
 
-function deleteEntry($id, $db) {
-    echo $id;
-}
 ?>

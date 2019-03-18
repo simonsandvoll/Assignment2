@@ -54,8 +54,8 @@ class db extends mysqli {
         }
     }
 
-    public function get_query ($query) {
-        return $this->query($query);
+    public function get_rows ($result) {
+        return $result->num_rows;
     }
 
     public function escape_string ($string) {

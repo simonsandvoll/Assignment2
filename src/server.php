@@ -7,8 +7,6 @@ require 'db.php';
 $username = "";
 $errors = array();
 
-
-
 // database connection
 $db = db::getInstance();
 
@@ -61,7 +59,8 @@ if (isset($_POST['loginUser'])) {
         $password = md5($password);
         $query = "SELECT * FROM users WHERE username='$username' and password='$password'";
         $result = $db->get_result($query);
-        if (mysqli_num_rows($result) == 1) {
+        echo '<pre>'; print_r(count($result)); echo '</pre>';
+        if ($username == $result['username']) {
             $_SESSION['username'] = $username;
             $_SESSION['success'] = "You are now logged in";
             header('location: ../index.php');
@@ -76,26 +75,27 @@ if (isset($_POST['loginUser'])) {
 if (isset($_POST['createTopic'])) {
     if (isset($_SESSION['username'])) {
         $username = $_SESSION['username'];
+        
         // get user from database
-        $query = "SELECT id FROM users WHERE username='$username' LIMIT 1";
-        $result = mysqli_query($db, $query);
-        $user = mysqli_fetch_assoc($result);
-        if (mysqli_num_rows($result) == 1) {
+        $query = "SELECT id, username FROM users WHERE username='$username' LIMIT 1";
+        $user = $db->get_result($query);
+        if ($user['username'] == $username) {
             $createdBy = $user['id'];
         } else {
-            array_push($errors, "Wrong username combination");
+            array_push($errors, "Wrong username");
         }
 
         $title = $db->escape_string($_POST['title']);
-        $description = mysqli_real_escape_string($db, $_POST['description']);
+        $description = $db->escape_string($_POST['description']);
 
         // validate form
         if (empty($title)) { array_push($errors, "title is requried"); }
+        if (empty($description)) { array_push($errors, "description is requried"); }
 
         if (count($errors) == 0) {
             $query = "INSERT INTO topics (title, description, createdBy)
                     VALUES('$title', '$description', '$createdBy')";
-            mysqli_query($db, $query);
+            $db->dbquery($query);
             $_SESSION['success'] = "Created topic";
             header('location: ../index.php');
         }
@@ -112,24 +112,22 @@ if (isset($_POST['writeEntry'])) {
         $username = $_SESSION['username'];
 
         // get user from database
-        $query = "SELECT id FROM users WHERE username='$username' LIMIT 1";
-        $result = mysqli_query($db, $query);
-        $user = mysqli_fetch_assoc($result);
-        if (mysqli_num_rows($result) == 1) {
+        $query = "SELECT id, username FROM users WHERE username='$username' LIMIT 1";
+        $user = $db->get_result($query);
+        if ($user['username'] == $username) {
             $createdBy = $user['id'];
         } else {
             array_push($errors, "Wrong username");
         }
 
-        $title = mysqli_real_escape_string($db, $_POST['title']);
-        $content = mysqli_real_escape_string($db, $_POST['content']);
-        $topic = mysqli_real_escape_string($db, $_POST['topic']);
+        $title = $db->escape_string($_POST['title']);
+        $content = $db->escape_string($_POST['content']);
+        $topic = $db->escape_string($_POST['topic']);
 
         // check topics from database
         $query = "SELECT id FROM topics WHERE id='$topic' LIMIT 1";
-        $result = mysqli_query($db, $query);
-        $topicQuery = mysqli_fetch_assoc($result);
-        if (mysqli_num_rows($result) == 1) {
+        $topicQuery = $db->get_result($query);
+        if ($topicQuery['id'] == $topic) {
             $topic = $topicQuery['id'];
         } else {
             array_push($errors, "Topic does not exist");
@@ -143,7 +141,7 @@ if (isset($_POST['writeEntry'])) {
         if (count($errors) == 0) {
             $query = "INSERT INTO entries (title, content, createdBy, topicId)
                     VALUES('$title', '$content', '$createdBy', '$topic')";
-            mysqli_query($db, $query);
+            $db->dbquery($query);
             $_SESSION['success'] = "Written entry";
             header('location: ../index.php');
         }
@@ -160,11 +158,11 @@ if (isset($_GET['deleteId'])) {
         $deleteId = $_GET['deleteId'];
         $username = $_SESSION['username'];
         $userId = '';
+        
         // get user from database
-        $uQuery = "SELECT id FROM users WHERE username='$username' LIMIT 1";
-        $eResult = mysqli_query($db, $uQuery);
-        $user = mysqli_fetch_assoc($eResult);
-        if (mysqli_num_rows($eResult) == 1) {
+        $uQuery = "SELECT id, username FROM users WHERE username='$username' LIMIT 1";
+        $user = $db->get_result($uQuery);
+        if ($user['username'] == $username) {
             $userId = $user['id'];
         } else {
             array_push($errors, "Wrong username");
@@ -173,7 +171,7 @@ if (isset($_GET['deleteId'])) {
         if (count($errors) == 0) {
             // delete entry
             $entryQuery = "DELETE FROM entries WHERE createdBy='$userId' AND id='$deleteId'";
-            $entryResult = mysqli_query($db, $entryQuery);
+            $entryResult = $db->dbquery($entryQuery);
             if ($entryResult) {
                 echo 'deleted entry ' . $deleteId . ' by ' . $username;
                 $_SESSION['success'] = "Entry deleted";
@@ -195,10 +193,9 @@ if (isset($_GET['deleteTopicId'])) {
         $userId = '';
 
         // check if user is in database
-        $uQuery = "SELECT id FROM users WHERE username='$username' LIMIT 1";
-        $eResult = mysqli_query($db, $uQuery);
-        $user = mysqli_fetch_assoc($eResult);
-        if (mysqli_num_rows($eResult) == 1) {
+        $uQuery = "SELECT id, username FROM users WHERE username='$username' LIMIT 1";
+        $user = $db->get_result($uQuery);
+        if ($user['username'] == $username) {
             $userId = $user['id'];
         } else {
             array_push($errors, "Wrong username");
@@ -206,9 +203,9 @@ if (isset($_GET['deleteTopicId'])) {
 
         if (count($errors) == 0) {
             // delete topic
-            $entryQuery = "DELETE FROM topics WHERE createdBy='$userId' AND id='$deleteId'";
-            $entryResult = mysqli_query($db, $entryQuery);
-            if ($entryResult) {
+            $topicQuery = "DELETE FROM topics WHERE createdBy='$userId' AND id='$deleteId'";
+            $topicResult = $db->dbquery($topicQuery);
+            if ($topicResult) {
                 echo 'deleted topic ' . $deleteId . ' by ' . $username;
                 $_SESSION['success'] = "Topic deleted";
                 header('location: ../index.php');
@@ -220,11 +217,16 @@ if (isset($_GET['deleteTopicId'])) {
 }
 // !_____________________________________________________________________________________________
 // SORT TOPICS
-if (isset($_GET['sortingMethod']) && $_SESSION['username']) {
+if (isset($_GET['sortingMethod']) && isset($_SESSION['username'])) {
     $sortingMethod = $_GET['sortingMethod'];
     $username = $_SESSION['username'];
     setcookie('sorting'. $username . '', $sortingMethod, time() + (86400 * 30), "/");
     header('location: ../index.php');
+} else if (isset($_GET['sortingMethod']) && !isset($_SESSION['username'])) {
+    $sortingMethod = $_GET['sortingMethod'];
+    $_SESSION['sortingMethod'] = $sortingMethod;
+    header('location: ../index.php');
 }
+$db->close();
 ?>
 

@@ -70,10 +70,10 @@ if (isset($_GET['logout'])) {
                 <?php elseif (!isset($_COOKIE['sorting'.$_SESSION['username']])) : ?>
                     <option value="0">Chronological</option>
                     <option value="1">Popluarity</option>
-                <?php elseif (!isset($_SESSION['username'])) : ?>
-                    <option value="0">Chronological</option>
-                    <option value="1">Popluarity</option>
                 <?php endif ?>
+            <?php elseif (!isset($_SESSION['username'])) : ?>
+                <option value="0">Chronological</option>
+                <option value="1">Popluarity</option>
             <?php endif ?>
         </select>
         <input type="submit" value="sort">
