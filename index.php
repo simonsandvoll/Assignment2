@@ -49,6 +49,12 @@ if (isset($_GET['logout'])) {
     	<p> <a href="index.php?logout='1'" style="color: red;">logout</a> </p>
         <a href="./src/create.php?topic=1">Create Topic</a>
         <a href="./src/create.php?topic=0">Write entry</a>
+        <?php if (isset($_SESSION['userType'])) :?>
+            <p><?php echo $_SESSION['username']; ?> is a <?php echo $_SESSION['userType']; ?>.</p>
+            <?php if ($_SESSION['userType'] == 'Admin') : ?>
+                <a href=<?php $user = $_SESSION['username']; echo "./src/showUsers.php?user=$user";?>>Show users</a>
+            <?php endif ?>
+        <?php endif ?>
     <?php endif ?>
     <form action="./src/search.php" method="get">
         <label for="search">What are you looking for?</label>
@@ -78,6 +84,7 @@ if (isset($_GET['logout'])) {
         </select>
         <input type="submit" value="sort">
     </form>
+
     <?php include('./src/showTopics.php'); ?>
     <?php include('./src/errors.php'); ?>
 </div>

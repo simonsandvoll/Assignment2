@@ -1,6 +1,6 @@
 <?php
 
-require 'db.php';
+require '../classes/db.php';
 
 if (isset($_GET['user'])) {
     $username = $_GET['user'];

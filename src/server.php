@@ -2,7 +2,7 @@
 
 session_start();
 
-require 'db.php';
+require '../classes/db.php';
 
 $username = "";
 $errors = array();
@@ -23,18 +23,14 @@ if (isset($_POST['regUser'])) {
     if ($password_1 != $password_2) { array_push($errors, "The two passwords do not match"); }
 
     // check if user exists in database
-    $checkQuery = "SELECT * FROM users WHERE username='$username' LIMIT 1";
-    $user = $db->get_result($checkQuery);
-
+    $user = $db->__getUsers("username='$username'", 1);
     if ($user) {
-        if ($user['username'] === $username) {
-            array_push($errors, "Username already exists");
-        }
-    }
-    if (count($errors) == 0) {
+        array_push($errors, "Username already exists");
+    } else {
+        echo 'user does not exist';
         $password = md5($password_1); // encrypt password 
 
-        $insertUserQuery = "INSERT INTO users (username, password) VALUES('$username', '$password')";
+        $insertUserQuery = "INSERT INTO users (username, password) VALUES ('$username', '$password')";
         $db->dbquery($insertUserQuery);
         $_SESSION['username'] = $username;
         $_SESSION['success'] = "You are now logged in";
@@ -45,6 +41,7 @@ if (isset($_POST['regUser'])) {
 
 // LOGIN USER___________________________________________________________________________________
 if (isset($_POST['loginUser'])) {
+
     $username = $db->escape_string($_POST['username']);
     $password = $db->escape_string($_POST['password']);
 
@@ -56,14 +53,17 @@ if (isset($_POST['loginUser'])) {
     }
 
     if (count($errors) == 0) {
+        
         $password = md5($password);
-        $query = "SELECT * FROM users WHERE username='$username' and password='$password'";
-        $result = $db->get_result($query);
-        echo '<pre>'; print_r(count($result)); echo '</pre>';
-        if ($username == $result['username']) {
-            $_SESSION['username'] = $username;
+
+        $users = $db->__getUsers("username='$username' AND password='$password'", 1);
+
+        if ($users) {
+            $user = $users[0];
+            $_SESSION['username'] = $user->username;
+            $_SESSION['userType'] = $user->type;
             $_SESSION['success'] = "You are now logged in";
-            header('location: ../index.php');
+            header('location: ../index.php'); 
         } else {
             array_push($errors, "Wrong username/password combination");
         }
@@ -77,14 +77,15 @@ if (isset($_POST['createTopic'])) {
         $username = $_SESSION['username'];
         
         // get user from database
-        $query = "SELECT id, username FROM users WHERE username='$username' LIMIT 1";
-        $user = $db->get_result($query);
-        if ($user['username'] == $username) {
-            $createdBy = $user['id'];
+        $users = $db->__getUsers("username='$username'", 1);
+        if ($users) {
+            $user = $users[0];
+            $createdBy = $user->id;
         } else {
             array_push($errors, "Wrong username");
         }
 
+        // escape special characters in a string for use in an SQL statement
         $title = $db->escape_string($_POST['title']);
         $description = $db->escape_string($_POST['description']);
 
@@ -111,36 +112,37 @@ if (isset($_POST['writeEntry'])) {
     if (isset($_SESSION['username'])) {
         $username = $_SESSION['username'];
 
-        // get user from database
-        $query = "SELECT id, username FROM users WHERE username='$username' LIMIT 1";
-        $user = $db->get_result($query);
-        if ($user['username'] == $username) {
-            $createdBy = $user['id'];
-        } else {
-            array_push($errors, "Wrong username");
-        }
-
+        // escape special characters in a string for use in an SQL statement
         $title = $db->escape_string($_POST['title']);
         $content = $db->escape_string($_POST['content']);
-        $topic = $db->escape_string($_POST['topic']);
-
-        // check topics from database
-        $query = "SELECT id FROM topics WHERE id='$topic' LIMIT 1";
-        $topicQuery = $db->get_result($query);
-        if ($topicQuery['id'] == $topic) {
-            $topic = $topicQuery['id'];
-        } else {
-            array_push($errors, "Topic does not exist");
-        }
+        $topicId = $db->escape_string($_POST['topic']);
 
         // validate form
         if (empty($title)) { array_push($errors, "title is requried"); }
         if (empty($content)) { array_push($errors, "content is requried"); }
-        if (empty($topic)) { array_push($errors, "topic is requried"); }
+        if (empty($topicId)) { array_push($errors, "topic is requried"); }
 
+        // get user from database
+        $users = $db->__getUsers("username='$username'", 1);
+        if ($users) {
+            $user = $users[0];
+            $createdBy = $user->id;
+        } else {
+            array_push($errors, "Wrong username");
+        }
+
+        // check topics from database
+        $topics = $db->__getTopics("id='$topicId'", 1);
+        if ($topics) {
+            $topic = $topics[0];
+            $tId = $topic->id;
+        } else {
+            array_push($errors, "Topic does not exist");
+        }
+        
         if (count($errors) == 0) {
             $query = "INSERT INTO entries (title, content, createdBy, topicId)
-                    VALUES('$title', '$content', '$createdBy', '$topic')";
+                    VALUES('$title', '$content', '$createdBy', '$tId')";
             $db->dbquery($query);
             $_SESSION['success'] = "Written entry";
             header('location: ../index.php');
@@ -155,25 +157,25 @@ if (isset($_POST['writeEntry'])) {
 if (isset($_GET['deleteId'])) {
     if (isset($_SESSION['username'])) {
         unset($deleteId, $username, $userId);
+        
         $deleteId = $_GET['deleteId'];
         $username = $_SESSION['username'];
         $userId = '';
         
-        // get user from database
-        $uQuery = "SELECT id, username FROM users WHERE username='$username' LIMIT 1";
-        $user = $db->get_result($uQuery);
-        if ($user['username'] == $username) {
-            $userId = $user['id'];
+        // check if user is in database
+        $users = $db->__getUsers("username='$username'", 1);
+        if ($users) {
+            $user = $users[0];
+            $userId = $user->id;
         } else {
             array_push($errors, "Wrong username");
         }
 
         if (count($errors) == 0) {
             // delete entry
-            $entryQuery = "DELETE FROM entries WHERE createdBy='$userId' AND id='$deleteId'";
+            $entryQuery = "DELETE FROM entries WHERE id='$deleteId'";
             $entryResult = $db->dbquery($entryQuery);
             if ($entryResult) {
-                echo 'deleted entry ' . $deleteId . ' by ' . $username;
                 $_SESSION['success'] = "Entry deleted";
                 header('location: ../index.php');
             } else {
@@ -193,20 +195,19 @@ if (isset($_GET['deleteTopicId'])) {
         $userId = '';
 
         // check if user is in database
-        $uQuery = "SELECT id, username FROM users WHERE username='$username' LIMIT 1";
-        $user = $db->get_result($uQuery);
-        if ($user['username'] == $username) {
-            $userId = $user['id'];
+        $users = $db->__getUsers("username='$username'", 1);
+        if ($users) {
+            $user = $users[0];
+            $userId = $user->id;
         } else {
             array_push($errors, "Wrong username");
         }
 
         if (count($errors) == 0) {
             // delete topic
-            $topicQuery = "DELETE FROM topics WHERE createdBy='$userId' AND id='$deleteId'";
+            $topicQuery = "DELETE FROM topics WHERE id='$deleteId'";
             $topicResult = $db->dbquery($topicQuery);
             if ($topicResult) {
-                echo 'deleted topic ' . $deleteId . ' by ' . $username;
                 $_SESSION['success'] = "Topic deleted";
                 header('location: ../index.php');
             } else {
@@ -216,7 +217,28 @@ if (isset($_GET['deleteTopicId'])) {
     }
 }
 // !_____________________________________________________________________________________________
-// SORT TOPICS
+
+// DELETE USER___________________________________________________________________________________
+
+if (isset($_GET['deleteUserId']) && isset($_SESSION['username']) && isset($_SESSION['userType'])) {
+    $deleteId = $_GET['deleteUserId'];
+    $username = $_SESSION['username'];
+    $userType = $_SESSION['userType'];
+    echo "$deleteId, $username, $userType";
+    if ($userType == 'Admin') {
+        // check if user has entries that he has created
+        $entries = $db->__getEntries("createdBy=$deleteId");
+        if ($entries != null) {
+            echo '<br>this user <b> has </b> entries that he/she has created';
+        } else {
+            echo '<br>this user has <b> no </b> entries that he/she has created';
+        }
+    }
+}
+
+// !_____________________________________________________________________________________________
+
+// SORT TOPICS___________________________________________________________________________________
 if (isset($_GET['sortingMethod']) && isset($_SESSION['username'])) {
     $sortingMethod = $_GET['sortingMethod'];
     $username = $_SESSION['username'];
@@ -227,6 +249,8 @@ if (isset($_GET['sortingMethod']) && isset($_SESSION['username'])) {
     $_SESSION['sortingMethod'] = $sortingMethod;
     header('location: ../index.php');
 }
+// !_____________________________________________________________________________________________
+
 $db->close();
 ?>
 
