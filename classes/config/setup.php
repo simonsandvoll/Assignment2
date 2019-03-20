@@ -19,6 +19,7 @@ function createTables($mysqli) {
        id INT NOT NULL AUTO_INCREMENT,
        username VARCHAR(255) NOT NULL,
        password VARCHAR(255) NOT NULL,
+       type VARCHAR(255) NOT NULL DEFAULT 'Author',
        CONSTRAINT pk_user PRIMARY KEY (id)
     )";
     try {
@@ -27,7 +28,9 @@ function createTables($mysqli) {
         echo $e->getMessage(), PHP_EOL;
     }
     // insert admin user 
-    $adminQuery = "INSERT INTO users (username, password, type) VALUES ('Simon', '1234', 'Admin')";
+
+    $password = md5('1234');
+    $adminQuery = "INSERT INTO users (username, password, type) VALUES ('simon', '$password', 'Admin')";
     try {
         $mysqli->query($adminQuery);
     } catch (\Exception $e) {
@@ -59,6 +62,20 @@ function createTables($mysqli) {
     );";
     try {
         $mysqli->query($entryQuery);
+    } catch (\Exception $e) {
+        echo $e->getMessage(), PHP_EOL;
+    }
+
+    // add indexes
+    $topicIndex = "ALTER TABLE topics ADD FULLTEXT KEY ft_topics (title, description);";
+    try {
+        $mysqli->query($topicIndex);
+    } catch (\Exception $e) {
+        echo $e->getMessage(), PHP_EOL;
+    }
+    $entryIndex = "ALTER TABLE entries ADD FULLTEXT KEY ft_entries (title, content);";
+    try {
+        $mysqli->query($entryIndex);
     } catch (\Exception $e) {
         echo $e->getMessage(), PHP_EOL;
     }
