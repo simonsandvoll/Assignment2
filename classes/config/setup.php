@@ -27,10 +27,11 @@ function createTables($mysqli) {
     } catch (\Exception $e) {
         echo $e->getMessage(), PHP_EOL;
     }
-    // insert admin user 
 
+    // insert admin user 
     $password = md5('1234');
     $adminQuery = "INSERT INTO users (username, password, type) VALUES ('simon', '$password', 'Admin')";
+    
     try {
         $mysqli->query($adminQuery);
     } catch (\Exception $e) {
