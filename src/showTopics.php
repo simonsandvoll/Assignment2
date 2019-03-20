@@ -47,6 +47,11 @@ if ($topics == null) {
         ";
     foreach($topics as $topic) {
         $topic->__toString();
+        if ($username != '') {
+            echo "<a href='./src/showEntries.php?id=$topic->id&user=$username'>Show All Entries($topic->entryCount)</a>";
+        } else {
+            echo "<a href='./src/showEntries.php?id=$topic->id'>Show All Entries($topic->entryCount)</a>";
+        }
         $entries = $db->__getEntries("topicId=$topic->id", 1);
         if ($entries == null) {
             array_push($errors, "no entries found");

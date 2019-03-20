@@ -53,9 +53,7 @@ if (isset($_POST['loginUser'])) {
     }
 
     if (count($errors) == 0) {
-        
         $password = md5($password);
-
         $users = $db->__getUsers("username='$username' AND password='$password'", 1);
 
         if ($users) {
@@ -122,6 +120,7 @@ if (isset($_POST['writeEntry'])) {
         if (empty($content)) { array_push($errors, "content is requried"); }
         if (empty($topicId)) { array_push($errors, "topic is requried"); }
 
+        echo $topicId;
         // get user from database
         $users = $db->__getUsers("username='$username'", 1);
         if ($users) {
@@ -221,17 +220,56 @@ if (isset($_GET['deleteTopicId'])) {
 // DELETE USER___________________________________________________________________________________
 
 if (isset($_GET['deleteUserId']) && isset($_SESSION['username']) && isset($_SESSION['userType'])) {
+    unset($deleteId, $username, $userType, $deleteType);
     $deleteId = $_GET['deleteUserId'];
     $username = $_SESSION['username'];
     $userType = $_SESSION['userType'];
-    echo "$deleteId, $username, $userType";
-    if ($userType == 'Admin') {
-        // check if user has entries that he has created
-        $entries = $db->__getEntries("createdBy=$deleteId");
-        if ($entries != null) {
-            echo '<br>this user <b> has </b> entries that he/she has created';
-        } else {
-            echo '<br>this user has <b> no </b> entries that he/she has created';
+    if (isset($_GET['delete']) && $userType == 'Admin') {
+        $deleteType = $_GET['delete'];
+        if ($deleteType == 'Yes') {
+            $query = "DELETE FROM users WHERE id='$deleteId'";
+            $result = $db->dbquery($query);
+            if($result) {
+                $_SESSION['success'] = "User deleted";
+                header('location: ../index.php');
+            } else {
+                array_push($errors, "Error deleting user");
+            }
+        }
+    } else {
+        if ($userType == 'Admin') {
+            // check if user has entries that he has created
+            $entries = $db->__getEntries("createdBy=$deleteId");
+            $topics = $db->__getTopics("createdBy=$deleteId");
+            if ($entries != null && $topics !=null) {
+                echo "
+                    <p>this user <b> has </b> entries and topics that he/she has created</p>
+                    <p>Are you sure you want to delete this user and all his/her entries and topics</p>
+                    <a href='../src/server.php?deleteUserId=$deleteId&delete=Yes'>Yes</a>
+                    <a href='../src/server.php?deleteUserId=$deleteId&delete=No'>No</a>
+                ";
+            } else if($entries == null && $topics != null) {
+                echo "
+                    <p>this user has <b> no </b> entries, but has topics that he/she has created</p>
+                    <p>Are you sure you want to delete this user and his/her topics?</p>
+                    <a href='../src/server.php?deleteUserId=$deleteId&delete=Yes'>Yes</a>
+                    <a href='../src/server.php?deleteUserId=$deleteId&delete=No'>No</a>
+                ";
+            } else if($entries != null && $topics == null) {
+                echo "
+                    <p>this user has <b> no </b> topics, but has entries that he/she has created</p>
+                    <p>Are you sure you want to delete this user and his/her entries?</p>
+                    <a href='../src/server.php?deleteUserId=$deleteId&delete=Yes'>Yes</a>
+                    <a href='../src/server.php?deleteUserId=$deleteId&delete=No'>No</a>
+                ";
+            }  else if($entries == null && $topics == null) {
+                echo "
+                    <p>this user has <b> no </b> entries or topics that he/she has created</p>
+                    <p>Are you sure you want to delete this user?</p>
+                    <a href='../src/server.php?deleteUserId=$deleteId&delete=Yes'>Yes</a>
+                    <a href='../src/server.php?deleteUserId=$deleteId&delete=No'>No</a>
+                ";
+            }
         }
     }
 }

@@ -8,13 +8,10 @@ try {
 }
 if ($mysqli->select_db('urbandictionary') === false) {
     // Create db
-    echo 'no database';
     $dbQuery = 'CREATE DATABASE urbandictionary';
     $mysqli->query($dbQuery);
     $mysqli->select_db('urbandictionary');
     createTables($mysqli);
-} else {
-    echo "database exists";
 }
 
 function createTables($mysqli) {
@@ -29,13 +26,20 @@ function createTables($mysqli) {
     } catch (\Exception $e) {
         echo $e->getMessage(), PHP_EOL;
     }
+    // insert admin user 
+    $adminQuery = "INSERT INTO users (username, password, type) VALUES ('Simon', '1234', 'Admin')";
+    try {
+        $mysqli->query($adminQuery);
+    } catch (\Exception $e) {
+        echo $e->getMessage(), PHP_EOL;
+    }
     $topicQuery = "CREATE TABLE topics (
         id INT NOT NULL AUTO_INCREMENT,
         title VARCHAR(255) NOT NULL,
         description VARCHAR(255) NOT NULL,
         createdBy INT NOT NULL,
         CONSTRAINT pk_topics PRIMARY KEY (id),
-        CONSTRAINT fk_users_topics FOREIGN KEY (createdBy) REFERENCES users(id) ON UPDATE CASCADE ON DELETE RESTRICT
+        CONSTRAINT fk_users_topics FOREIGN KEY (createdBy) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE
     );";
     try {
         $mysqli->query($topicQuery);
@@ -50,17 +54,18 @@ function createTables($mysqli) {
         topicId INT NOT NULL,
         createdBy INT NOT NULL,
         CONSTRAINT pk_entries PRIMARY KEY (id),
-        CONSTRAINT fk_users_entries FOREIGN KEY (createdBy) REFERENCES users(id) ON UPDATE CASCADE ON DELETE RESTRICT,
-        CONSTRAINT fk_topics_entries FOREIGN KEY (topicId) REFERENCES topics(id) ON UPDATE CASCADE ON DELETE RESTRICT
+        CONSTRAINT fk_users_entries FOREIGN KEY (createdBy) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
+        CONSTRAINT fk_topics_entries FOREIGN KEY (topicId) REFERENCES topics(id) ON UPDATE CASCADE ON DELETE CASCADE
     );";
     try {
         $mysqli->query($entryQuery);
     } catch (\Exception $e) {
         echo $e->getMessage(), PHP_EOL;
     }
-
     echo 'tables created';
 }
+
+$mysqli->close();
 
 // regex password check
 /*

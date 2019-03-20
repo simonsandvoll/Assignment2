@@ -1,6 +1,7 @@
 <?php
 
-include('config.php');
+include_once('config/setup.php');
+include('config/config.php');
 require_once 'userClass.php';
 require_once 'topicClass.php';
 require_once 'entryClass.php';
@@ -95,16 +96,14 @@ class db extends mysqli {
 
     public function __getTopics($condition = null, $limit = null, $order = null) {
         $topics = array();
-        if ($condition != NULL && $limit != NULL) {
-            $query = "SELECT t.*, count(e.topicId) as entryCount FROM topics t LEFT OUTER JOIN entries e ON t.id = e.topicId GROUP BY t.id";
-        } else if ($condition != NULL && $limit == NULL) {
+        if ($condition != NULL && $limit == NULL) {
             $query = "SELECT t.*, count(e.topicId) as entryCount FROM topics t LEFT OUTER JOIN entries e ON t.id = e.topicId WHERE t.$condition GROUP BY t.id";
-        } else if ($order != null && $limit != null) {
+        } else if ($condition != null && $limit != null) {
             $query = "SELECT t.*, count(e.topicId) as entryCount FROM topics t LEFT OUTER JOIN entries e ON t.id = e.topicId WHERE t.$condition GROUP BY t.id LIMIT $limit";
         } else if ($order != null && $condition == null && $limit == null) {
             $query = "SELECT t.*, count(e.topicId) as entryCount FROM topics t LEFT OUTER JOIN entries e ON t.id = e.topicId GROUP BY t.id $order";
         } else {
-            $query = "SELECT * FROM topics";
+            $query = "SELECT t.*, count(e.topicId) as entryCount FROM topics t LEFT OUTER JOIN entries e ON t.id = e.topicId GROUP BY t.id";
         }
         $result = $this->query($query);
         if ($result) {
@@ -155,6 +154,41 @@ class db extends mysqli {
         } else {
             return null;
         }
+    }
+
+    public function __searchDb($table, $match, $search) {
+        $searchResult = array();
+        if ($table == 'topics') {
+            $query = "SELECT t.*, count(e.topicId) as entryCount FROM $table t LEFT OUTER JOIN entries e ON t.id = e.topicId 
+                WHERE MATCH $match AGAINST ('*$search*' IN BOOLEAN MODE)";
+        } else  {
+            $query = "SELECT * FROM $table WHERE MATCH $match AGAINST ('*$search*' IN BOOLEAN MODE)";
+        }
+        $result = $this->query($query);
+        if ($result) {
+            $numRow = $result->num_rows;
+            if ($numRow == 0) {
+            } else {
+                while ($row = $result->fetch_assoc()) {
+                    if ($row['id'] != '') {
+                        $cbId = $row['createdBy'];
+                        $users = $this->__getUsers("id=$cbId", 1);
+                        if ($users) { $userCreatedBy = $users[0]->username; } else { $userCreatedBy = $row['createdBy']; }
+                        if ($table == 'topics') {
+                            $newTopic = new Topic ($row['id'], $row['title'], $row['description'], $userCreatedBy, $row['entryCount']);
+                            array_push($searchResult, $newTopic);
+                        } else {
+                            $newEntry = new Entry ($row['id'], $row['title'], $row['content'], $userCreatedBy, $row['topicId']);
+                            array_push($searchResult, $newEntry);
+                        }
+                    }
+                }
+                return $searchResult;
+            }
+        } else {
+            return null;
+        }
+
     }
 }
 

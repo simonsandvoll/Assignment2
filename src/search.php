@@ -10,52 +10,84 @@ $topicErrors = array();
 $entryErrors = array();
 
 $minStringLength = 3;
+
+
+include '../classes/db.php';
+
+// database connection
+$db = db::getInstance();
+
+
+if (isset($_SESSION['username'])) {
+    $username = $_SESSION['username'];
+    // find user type
+    $users = $db->__getUsers("username='$username'", 1);
+    if ($users) {
+        $userType = $users[0]->type;
+    } else {
+        echo "no users found";
+    }
+} else {
+    $username = '';
+    $userType = '';
+}
+
 if (isset($_GET['search'])) {
     unset($search, $tQuery, $tResult, $tNumRows);
     $search = $_GET['search'];
 
-    // database connection
-    $db = mysqli_connect('localhost', 'root', '', 'urbandictionary');
-
     if (strlen($search) >= $minStringLength) {
         $search = htmlspecialchars($search);
-        $search = mysqli_real_escape_string($db, $search);
-        $tQuery = "SELECT * FROM topics WHERE MATCH (title, description) AGAINST ('*$search*' IN BOOLEAN MODE)";
-        $tResult = mysqli_query($db, $tQuery);
-        if (!$tResult) { $tNumRows = 0; } else {
-            $tNumRows = mysqli_num_rows($tResult);
-        }
-        if ($tNumRows == 0) {
-            array_push($topicErrors, "no topics found with: '$search'");
-        } else {
-            echo '<b>in topics your search found: </b><div>';
-            while ($tRow = $tResult->fetch_assoc()) {
-                unset($topicTitle, $topicDesc, $topicCreatedBy);
-                
-                $topicUserId = $tRow["createdBy"];
-                $topicUserQuery = "SELECT username FROM users WHERE id='$topicUserId' LIMIT 1";
-                $topicUserResult = mysqli_query($db, $topicUserQuery);
-                $topicUsers = mysqli_fetch_assoc($topicUserResult);
+        $search = $db->escape_string($search);
 
-                if (mysqli_num_rows($topicUserResult) == 1) {
-                    $topicCreatedBy = $topicUsers['username'];
+        $topics = $db->__searchDb("topics", "(t.title, t.description)", $search);
+
+       if ($topics == null) {
+           array_push($topicErrors, "no topics found with: '$search'");
+       } else {
+            echo '<p>In <b>Topics</b> your search found this: </p><div>';  
+            foreach ($topics as &$topic) {
+                $topic->__toString();
+                if ($username != '') {
+                    echo "<a href='./showEntries.php?id=$topic->id&user=$username'>Show All Entries($topic->entryCount)</a>";
                 } else {
-                    array_push($topicErrors, 'did not find user');
+                    echo "<a href='./showEntries.php?id=$topic->id'>Show All Entries($topic->entryCount)</a>";
                 }
-                $topicTitle = $tRow['title']; 
-                $topicDesc = $tRow['description']; 
-                $topicId = $tRow['id'];
-                if (count($topicErrors) == 0) {
+           }
+           echo '</div>';
+       }
+
+       $entries = $db->__searchDb("entries", "(title, content)", $search);
+
+       if ($entries == null) {
+            array_push($entryErrors, "no entries found with: '$search'");
+       } else {
+            echo '<p>In <b>Entries</b> your search found this: </p><div>';  
+            foreach ($entries as &$entry) {
+                $entry->__toString();
+                $eId = $entry->id;
+                $tId = $entry->topicId;
+                $entryTopics = $db->__getTopics("id=$tId", 1);
+                $topicTitle = $entryTopics[0]->title;
+                if ($username == $entry->createdBy || $userType == 'Admin')  {
+                    echo "<a href='server.php?deleteId=$eId'>Delete</a>";
+                }
                 echo "
-                    <h2>$topicTitle</h2>
-                    <p>$topicDesc<p>
-                    <span>topic created by: $topicCreatedBy</span><br>
-                    <a href='./showEntries.php?id=$topicId'>show all entries under the $topicTitle topic</a>
-                    ";
-                }
+                    <p>This entry is under the $topicTitle topic<p>
+                    <a href='./showEntries.php?id=$tId'>show all entries under the $topicTitle topic</a>";
             }
             echo '</div>';
-        }
+       }
+       echo '<br><a href="../index.php">back</a>';
+    } else {
+        array_push($topicErrors, "search too short");
+    }
+    if (sizeof($topicErrors) > 0 || sizeof($entryErrors) > 0 && sizeof($errors) == 0) {
+        $errors = array_merge($entryErrors, $topicErrors);
+    }
+    
+    include('./errors.php');
+      /*   
         $eQuery = "SELECT * FROM entries WHERE MATCH (title, content) AGAINST ('*$search*' IN BOOLEAN MODE)";
         $eResult = mysqli_query($db, $eQuery);
 
@@ -108,12 +140,7 @@ if (isset($_GET['search'])) {
     }
     else {
         array_push($errors, 'searchword must be longer that 3 characters');
-    }
-}
+    }*/
+} 
 
-if (sizeof($topicErrors) > 0 || sizeof($entryErrors) > 0 && sizeof($errors) == 0) {
-    $errors = array_merge($entryErrors, $topicErrors);
-}
-
-include('./errors.php');
 ?>
