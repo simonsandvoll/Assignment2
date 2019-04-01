@@ -15,12 +15,6 @@ class Topic {
             <span>created By: $this->createdBy</span><br>
             <h4>Entries: </h4>
             ";
-            /* echo "
-            <h3>$this->title</h3>
-            <p>$this->description</p>
-            <span>created By: $this->createdBy</span><br>
-            <a href='./src/showEntries.php?id=$this->id'>Show All Entries($this->entryCount)</a>
-            <h4>Entries: </h4> */
     }
 }
 ?>

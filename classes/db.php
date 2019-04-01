@@ -17,7 +17,7 @@ class db extends mysqli {
     private $dbName = DBNAME;
     private $dbHost = DBHOST;
 
-    //return an instance of the object if the object if it does not already exist.
+    //return an instance of the object if the object does not already exist.
     public static function getInstance() {
         if (!self::$instance instanceof self) {
             self::$instance = new self;
