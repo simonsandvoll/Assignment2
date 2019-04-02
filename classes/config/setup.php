@@ -29,7 +29,7 @@ function createTables($mysqli) {
     }
 
     // insert admin user 
-    $password = md5('1234');
+    $password = md5('Admin');
     $adminQuery = "INSERT INTO users (username, password, type) VALUES ('simon', '$password', 'Admin')";
     
     try {
@@ -85,17 +85,6 @@ function createTables($mysqli) {
 
 $mysqli->close();
 
-// regex password check
-/*
-    if (!preg_match("/^.{5,}$/", password)) // check if password is longer than 5 characters
-    if (!/[a-z]/.test(password)) // check if there is at least one lowercase character
-    if (!/[A-Z]/.test(password)) // check if there is at least one uppercase character
-*/
 
-// regex username check
-/*
-    if (!/^{3,8}$/.test(username)) // check if username is between 3-8 characters
-    if (!/[^\w]/.test(username)) // check if username only includes letters, number and '_'
-*/
 
 ?>

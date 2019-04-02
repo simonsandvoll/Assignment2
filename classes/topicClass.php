@@ -12,7 +12,7 @@ class Topic {
             echo "
             <h3>$this->title</h3>
             <p>$this->description</p>
-            <span>created By: $this->createdBy</span><br>
+            <p>created By: $this->createdBy</p><br>
             <h4>Entries: </h4>
             ";
     }

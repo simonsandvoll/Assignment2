@@ -14,7 +14,7 @@ class User {
                 <td>$this->id</td>
                 <td>$this->username</td>
                 <td>$this->type</td>
-                <td><a href='../src/server.php?deleteUserId=$tempId'>Delete User?</a></td>
+                <td><a class='btn btn-danger' href='../src/server.php?deleteUserId=$tempId'>Delete User?</a></td>
             </tr>";
     }
 }

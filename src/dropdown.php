@@ -7,10 +7,10 @@ $result = $conn->query("SELECT id, title FROM topics");
 
 $numRows = mysqli_num_rows($result);
 if ($numRows == 0) {
-    echo '<b style="color: red;"> missing topics, create topic before entry </b>';
-    echo '<a href="./create.php?topic=1">Create Topic</a><br>';
+    echo '<b class="alert alert-warning"> missing topics, create topic before entry </b>';
+    echo '<a class="btn btn-primary" href="./create.php?topic=1">Create Topic</a><br>';
 } else {
-    echo "<select name='topic' id='topicDropdown'>";
+    echo "<select class='form-control' name='topic' id='topicDropdown'>";
     while ($row = $result->fetch_assoc()) {
         unset($id, $title);
         $id = $row['id'];

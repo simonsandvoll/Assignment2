@@ -1,3 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap-theme.min.css" crossorigin="anonymous">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" crossorigin="anonymous"></script>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Topic</title>
+</head>
+<body>
+    <div class="container-fluid mt-3">
+
+</body>
+</html>
+
+
 <?php
 
 require '../classes/db.php';
@@ -35,30 +53,32 @@ if (isset($_GET['id'])) {
     if (count($errors) == 0) {
         $entryQuery = "SELECT * FROM entries WHERE topicId = '$topicId'";
         $entries = $db->__getEntries("topicId='$topicId'");
+        echo "<h1>$topicTitle</h1>";
         if ($entries == null) {
             array_push($errors, "No entries found!");
 
         } else {
-            echo "
-                <h1>$topicTitle</h1>
-                <div class='entries'>"; 
+            echo "<div class='mt-3 p-3 border bg-light'>"; 
             foreach ($entries as &$entry) {
                 $entry->__toString();
 
                 if ($username == $entry->createdBy || $userType == 'Admin')  {
                     $eId = $entry->id;
-                    echo "<a href='server.php?deleteId=$eId'>Delete</a>";
+                    echo "<a class='btn btn-danger' href='server.php?deleteId=$eId'>Delete</a>";
                 }
             }
-            echo "
-                </div>
-                <a href='./create.php?topic=1'>Create Topic</a>
-                <a href='./create.php?topic=0'>Write entry</a>
-                <a href='../index.php'>Back</a>
-            ";
+            echo "</div>";
         }
     }
+    echo "
+    <div class='mt-3'>
+        <a class='btn btn-primary' href='./create.php?topic=1'>Create Topic</a>
+        <a class='btn btn-primary' href='./create.php?topic=0'>Write entry</a>
+        <a class='btn btn-danger' href='../index.php'>&lt;back</a>
+    </div>
+    ";
 }
+echo '</div>';
 $db->close();
 
 ?>

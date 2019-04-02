@@ -1,3 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap-theme.min.css" crossorigin="anonymous">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" crossorigin="anonymous"></script>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Users</title>
+</head>
+<body>
+    <div class="container-fluid mt-3">
+
+</body>
+</html>
+
+
 <?php
 require '../classes/db.php';
 
@@ -17,12 +35,12 @@ function showUsers($username) {
     } else {
         echo "
             <h1>Users</h1>
-            <table>
-                <thead>
-                    <th>Id</th>
-                    <th>Username</th>
-                    <th>Type</th>
-                    <th>Delete?</th>
+            <table class='table'>
+                <thead class='thead-dark'>
+                    <th scope='col'>Id</th>
+                    <th scope='col'>Username</th>
+                    <th scope='col'>Type</th>
+                    <th scope='col'>Delete?</th>
                 </thead>
                 <tbody>
             ";
@@ -31,7 +49,7 @@ function showUsers($username) {
         }
         echo "
             </tbody></table>
-            <a href='../index.php'>Back</a>
+            <a class='btn btn-danger' href='../index.php'>&lt;Back</a></div>
         ";
     }
     include('../src/errors.php');

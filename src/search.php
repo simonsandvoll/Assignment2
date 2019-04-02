@@ -1,8 +1,27 @@
-<form action="search.php" method="get">
-    <label for="search">What are you looking for?</label>
-    <input type="search" name="search">
-    <input type="submit" value="search">
-</form>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap-theme.min.css" crossorigin="anonymous">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" crossorigin="anonymous"></script>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Search...</title>
+</head>
+<body>
+    <div class="container-fluid mt-3">
+        <form action="search.php" method="get" class="form-inline">
+            <div class="form-group mb-2">
+                <input class="form-control" type="search" name="search" placeholder="search...">
+            </div>
+            <div class="form-group mb-2">
+                <input class="btn btn-primary" type="submit" value="search">
+            </div>
+        </form>
+        <a class="btn btn-danger" href="../index.php">&lt;back</a>
+</body>
+</html>
 <?php
 
 $errors = array();
@@ -45,13 +64,13 @@ if (isset($_GET['search'])) {
        if ($topics == null) {
            array_push($topicErrors, "no topics found with: '$search'");
        } else {
-            echo '<p>In <b>Topics</b> your search found this: </p><div>';  
+            echo '<div class="mt-3 p-3 border bg-light"><h5>In <b>Topics</b> your search found this: </h5>';  
             foreach ($topics as &$topic) {
                 $topic->__toString();
                 if ($username != '') {
-                    echo "<a href='./showEntries.php?id=$topic->id&user=$username'>Show All Entries($topic->entryCount)</a>";
+                    echo "<a class='btn btn-primary' href='./showEntries.php?id=$topic->id&user=$username'>Show All Entries($topic->entryCount)</a>";
                 } else {
-                    echo "<a href='./showEntries.php?id=$topic->id'>Show All Entries($topic->entryCount)</a>";
+                    echo "<a class='btn btn-primary' href='./showEntries.php?id=$topic->id'>Show All Entries($topic->entryCount)</a>";
                 }
            }
            echo '</div>';
@@ -62,7 +81,7 @@ if (isset($_GET['search'])) {
        if ($entries == null) {
             array_push($entryErrors, "no entries found with: '$search'");
        } else {
-            echo '<p>In <b>Entries</b> your search found this: </p><div>';  
+            echo '<div class="mt-3 p-3 border bg-light "><p>In <b>Entries</b> your search found this: </p>';  
             foreach ($entries as &$entry) {
                 $entry->__toString();
                 $eId = $entry->id;
@@ -70,15 +89,14 @@ if (isset($_GET['search'])) {
                 $entryTopics = $db->__getTopics("id=$tId", 1);
                 $topicTitle = $entryTopics[0]->title;
                 if ($username == $entry->createdBy || $userType == 'Admin')  {
-                    echo "<a href='server.php?deleteId=$eId'>Delete</a>";
+                    echo "<a  class='btn btn-danger' href='server.php?deleteId=$eId'>Delete</a>";
                 }
                 echo "
                     <p>This entry is under the $topicTitle topic<p>
-                    <a href='./showEntries.php?id=$tId'>show all entries under the $topicTitle topic</a>";
+                    <a class='btn btn-primary' href='./showEntries.php?id=$tId'>show all entries under the $topicTitle topic</a>";
             }
-            echo '</div>';
+            echo '</div></div>';
        }
-       echo '<br><a href="../index.php">back</a>';
     } else {
         array_push($topicErrors, "search too short");
     }
