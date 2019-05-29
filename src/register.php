@@ -1,3 +1,4 @@
+<!-- REGISTER A NEW USER -->
 <?php include('server.php'); ?>
 
 <!DOCTYPE html>

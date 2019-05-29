@@ -6,7 +6,10 @@ class User {
         $this->password = $password;
         $this->type = $type;
     }
-
+    
+    /**
+     * ECHO info about that specific user
+    */
     public function __toString(){
         $tempId = $this->id;
         echo "

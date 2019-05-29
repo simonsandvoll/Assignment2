@@ -1,3 +1,4 @@
+<!-- SEARCH FOR CONTENT -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -30,12 +31,10 @@ $entryErrors = array();
 
 $minStringLength = 3;
 
-
 include '../classes/db.php';
 
 // database connection
 $db = db::getInstance();
-
 
 if (isset($_SESSION['username'])) {
     $username = $_SESSION['username'];
@@ -50,7 +49,11 @@ if (isset($_SESSION['username'])) {
     $username = '';
     $userType = '';
 }
-
+/** 
+ * If the search has any info query the topic and the entry tables to find any data with the info from the search bar 
+ * Inserts the received information from the database into divs.
+ * The search parameter must be longer than the set MINLENGTH ($minStringLength (3)) 
+*/
 if (isset($_GET['search'])) {
     unset($search, $tQuery, $tResult, $tNumRows);
     $search = $_GET['search'];

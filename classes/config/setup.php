@@ -14,6 +14,11 @@ if ($mysqli->select_db('urbandictionary') === false) {
     createTables($mysqli);
 }
 
+/**
+ * Create tables if no database exists. User table and an admin user with the password "Admin", Topic table, and entry table. 
+ * The topic table and the entry table has FULL TEXT indexes for searching possibilities
+ * @param { database connection } $mysqli -> a connection to the database
+*/
 function createTables($mysqli) {
     $userQuery = "CREATE TABLE users (
        id INT NOT NULL AUTO_INCREMENT,
@@ -30,7 +35,7 @@ function createTables($mysqli) {
 
     // insert admin user 
     $password = md5('Admin');
-    $adminQuery = "INSERT INTO users (username, password, type) VALUES ('simon', '$password', 'Admin')";
+    $adminQuery = "INSERT INTO users (username, password, type) VALUES ('admin', '$password', 'Admin')";
     
     try {
         $mysqli->query($adminQuery);
@@ -84,7 +89,5 @@ function createTables($mysqli) {
 }
 
 $mysqli->close();
-
-
 
 ?>

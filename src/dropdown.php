@@ -1,5 +1,7 @@
 <?php
 
+/** CREATE DROPDOWN OPTION FOR EACH TOPIC */
+
 $conn = new mysqli('localhost', 'root', '', 'urbandictionary') 
 or die ('Cannot connect to db');
 

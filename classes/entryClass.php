@@ -7,7 +7,9 @@ class Entry {
         $this->createdBy = $createdBy;
         $this->topicId = $topicId;
     }
-
+    /**
+     * ECHO info about that specific entry
+    */
     public function __toString(){
         echo "
             <h5>$this->title</h5>

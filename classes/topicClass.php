@@ -8,6 +8,9 @@ class Topic {
         $this->entryCount = $entryCount;
     }
 
+    /**
+     * ECHO info about that specific topic
+    */
     public function __toString(){
             echo "
             <h3>$this->title</h3>

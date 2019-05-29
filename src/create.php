@@ -2,7 +2,7 @@
 include('server.php'); 
 
 ?>
-
+<!-- CREATE TOPIC OR ENTRY -->
 <!DOCTYPE html>
 <html>
 <head>
